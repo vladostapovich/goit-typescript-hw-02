@@ -1,5 +1,5 @@
-import React from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import axios, { AxiosResponse, AxiosError } from "axios"; // Імпорт AxiosResponse і AxiosError
 import SearchBar from "./components/SearchBar/SearchBar";
 import ImageGallery from "./components/ImageGallery/ImageGallery";
 import Loader from "./components/Loader/Loader";
@@ -7,7 +7,6 @@ import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
 import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
 import ImageModal from "./components/ImageModal/ImageModal";
 import styles from "./App.module.css";
-import { useEffect, useState } from "react";
 
 interface Image {
   id: string;
@@ -18,12 +17,16 @@ interface Image {
   likes: number;
 }
 
+interface UnsplashResponse {
+  results: Image[];
+}
+
 const App: React.FC = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [query, setQuery] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<Image | null>(null);
 
   useEffect(() => {
@@ -32,7 +35,7 @@ const App: React.FC = () => {
     const fetchImages = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
+        const response: AxiosResponse<UnsplashResponse> = await axios.get(
           "https://api.unsplash.com/search/photos",
           {
             params: {
@@ -46,7 +49,7 @@ const App: React.FC = () => {
         setImages((prevImages) => [...prevImages, ...response.data.results]);
         setLoading(false);
       } catch (error) {
-        setError(error as Error);
+        setError(error.message);
         setLoading(false);
       }
     };
@@ -73,7 +76,7 @@ const App: React.FC = () => {
   return (
     <div className={styles.app}>
       <SearchBar onSubmit={handleSearch} />
-      {error && <ErrorMessage message={error.message} />}
+      {error && <ErrorMessage message={error} />}
       <ImageGallery images={images} onImageClick={handleImageClick} />
       {loading && <Loader />}
       {images.length > 0 && !loading && (
